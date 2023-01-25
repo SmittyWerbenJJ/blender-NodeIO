@@ -192,8 +192,6 @@ def createNodeGroup(nodegroupNodeTree: "NodeTree"):
 
     # add other Nodes
     for node in nodegroupNodeTree.nodes:
-        addNodeToTree(node, newBlenderNodeTree)
-
         # populate nodeTree Inputs
         if node.getType() == "NodeGroupInput":
             for socket in node.getOutputs():
@@ -203,33 +201,53 @@ def createNodeGroup(nodegroupNodeTree: "NodeTree"):
         elif node.getType() == "NodeGroupOutput":
             for socket in node.getInputs():
                 newBlenderNodeTree.outputs.new(socket.type, socket.name)
-
+        # add node to tree
+        addNodeToTree(node, newBlenderNodeTree)
     # add links to nodes
     for link in nodegroupNodeTree.links:
         addLinkToTree(link, newBlenderNodeTree)
 
 
 def addNodeToTree(node: Node, node_tree: bpy.types.NodeTree):
+    """
+    Add the Node to the Node tree and assign recorded data
+    In case of Node Groups, Create The NodeGroup Data block and add input/output Sockets
+    """
     # add node to tree
     newNode = node_tree.nodes.new(node.getType())
     newNode.location = node.getLocation()
     newNode.name = node.getName()
     newNode.label = node.getName()
 
-    if node.getType() == "ShaderNodeGroup":
+    node_type = node.getType()
+    is_InputOutputNode = node_type in ["NodeGroupInput", "NodeGroupOutput"]
+
+    if node_type == "ShaderNodeGroup":
         # add subtree to this node group
         newNode.node_tree = bpy.data.node_groups[node.getData()["subtree"]]
-    else:
-        # set socket inputs&outputs values for this node
 
-        for socket in node.getInputs():
+    else:
+        inputSockets = node.getInputs()
+        outputSockets = node.getOutputs()
+
+        # set socket inputs&outputs values for this node
+        for socket in inputSockets:
             if socket.value is not None:
+                # add missing Sockets to Node
+                if is_InputOutputNode:
+                    newNode.inputs.new(socket.type, socket.name)
+                # set Socket Value
                 val = socket.getValue()
                 if hasattr(newNode.inputs[socket.name], "default_value"):
                     newNode.inputs[socket.name].default_value = val
 
-        for socket in node.getOutputs():
+        for socket in outputSockets:
             if socket.value is not None:
+                # add missing Sockets to Node
+                if is_InputOutputNode:
+                    newNode.outputs.new(socket.type, socket.name)
+
+                # set Socket Value
                 val = socket.getValue()
                 if hasattr(newNode.outputs[socket.name], "default_value"):
                     newNode.outputs[socket.name].default_value = val
