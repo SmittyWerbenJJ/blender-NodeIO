@@ -56,7 +56,10 @@ class Node:
         # input attributes
         for socket in shaderNode.inputs:
             sockettype = socket.type
-            if sockettype == "VALUE":
+            if socket.bl_idname == "NodeSocketVirtual":
+                # skip grey socket that is used for GUI Purposes only
+                continue
+            elif sockettype == "VALUE":
                 value = float(socket.default_value)
             elif sockettype == "RGBA":
                 value = list(socket.default_value)
@@ -64,7 +67,6 @@ class Node:
                 value = list(socket.default_value)
             else:
                 value = str(getattr(socket, "default_value", None))
-
             x = NodeSocket(socket.bl_idname, socket.name, value)
             self.inputs.append(x)
 
@@ -72,7 +74,10 @@ class Node:
         for socket in shaderNode.outputs:
             sockettype = socket.type
 
-            if sockettype == "VALUE":
+            if socket.bl_idname == "NodeSocketVirtual":
+                # skip grey socket that is used for GUI Purposes only
+                continue
+            elif sockettype == "VALUE":
                 value = float(socket.default_value)
             elif sockettype == "RGBA":
                 value = list(socket.default_value)
@@ -185,7 +190,7 @@ class Node:
             if socket.value not in [None, "None", "null"]:
                 finalSockets.append(socket)
 
-        return finalSockets
+        return newSockets
 
     def getOutputs(self) -> list[NodeSocket]:
         newSockets = []
@@ -214,13 +219,7 @@ class Node:
                     continue
                 newSockets.append(NodeSocket(type, name, value))
 
-        # remove sockets without plausible values
-        finalSockets = []
-        for socket in newSockets.copy():
-            if socket.value not in [None, "None", "null"]:
-                finalSockets.append(socket)
-
-        return finalSockets
+        return newSockets
 
     def getData(self):
         return self.data
