@@ -10,6 +10,11 @@ class NodeSocket:
     name: str
     value: any
 
+    def __init__(self,type,name,value) -> None:
+        self.type=type
+        self.name=name
+        self.value = None if value in["none","None","NONE","Null"] else value
+
     def toJson(self):
         return {
             "type": self.type,
