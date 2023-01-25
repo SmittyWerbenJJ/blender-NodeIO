@@ -58,19 +58,11 @@ class ExportMaterialNode(bpy.types.Operator):
         )
 
         for exportjob in exportJobs:
-            if exportjob.type == "material":
-                save_node_graph_to_file(
-                    exportjob.nodetree,
-                    bpy.path.abspath(self.nodes_path),
-                    exportjob.name
-                )
-            elif exportjob.type == "subgraph":
-                save_subgraph_to_file(
-                    exportjob.nodetree,
-                    bpy.path.abspath(self.nodes_path),
-                    exportjob.name
-                )
-
+            save_node_graph_to_file(
+                exportjob.nodetree,
+                bpy.path.abspath(self.nodes_path),
+                exportjob.name
+            )
         return {'FINISHED'}
 
 
@@ -125,12 +117,7 @@ def gather_node_trees(object: bpy.types.Object, do_all_materials=False) -> list[
         if mj.name not in [i.name for i in materialJobs]:
             materialJobs.append(mj)
 
-        for node_group in getNodeGroupsInMaterial(material):
-            gj = ExportJob(node_group.name, NodeTree.serialize_bpy_NodeTree(node_group.node_tree), "subgraph")
-            if gj.name not in [i.name for i in nodeGroupJobs]:
-                nodeGroupJobs.append(gj)
-
-    return materialJobs + nodeGroupJobs
+    return materialJobs
 
 
 def save_node_graph_to_file(material_data, output_folder, mat_name):

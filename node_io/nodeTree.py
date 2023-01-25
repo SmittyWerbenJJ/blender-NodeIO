@@ -110,7 +110,7 @@ class NodeTree:
             "node_tree": self.name,
             "nodes": [n.toJson() for n in self.nodes],
             "links": self.links,
-            "subtrees": self.subtrees
+            "subtrees": [st.toJson() for st in self.subtrees]
         }
 
     def createMaterial(self):
