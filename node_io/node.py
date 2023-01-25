@@ -7,6 +7,30 @@ from mathutils import Vector
 from .nodeSocket import NodeSocket
 
 
+def getTypeFromBpyObject(object):
+    """
+    Get the Type as a string by checking the name between single quotes
+    """
+    quoteIndices = []
+    type_datavalue = str(type(object))
+    for i, c in enumerate(type_datavalue):
+        if c == "'":
+            quoteIndices.append(i)
+    return type_datavalue[quoteIndices[0] + 1:quoteIndices[1]]
+
+
+def is_jsonable(x):
+    """
+    check if object is json serializable
+    from: https://stackoverflow.com/a/53112659
+    """
+    try:
+        json.dumps(x)
+        return True
+    except (TypeError, OverflowError):
+        return False
+
+
 class Node:
     def __init__(self, shaderNode: bpy.types.ShaderNode = None) -> None:
         self.name = ""
@@ -71,25 +95,31 @@ class Node:
         # Sub-Node trees for shaderNodeGroups
         elif shaderNode.bl_idname == "ShaderNodeGroup":
             self.data["subtree"] = shaderNode.node_tree.name
-        # other data
+
+        # other Nodes data
         else:
             for dataKey in dir(shaderNode):
                 # data to be skipped
                 datavalue = getattr(shaderNode, dataKey)
                 string_datavalue = str(getattr(shaderNode, dataKey))
+                type_datavalue = getTypeFromBpyObject(datavalue)
+
                 if dataKey in ["image", "node_tree", "inputs", "outputs"]:
                     continue
                 if dataKey.startswith("__"):
                     continue
-                # if string_datavalue.startswith("<bpy"):
-                #     continue
+                if string_datavalue.startswith("<bpy_struct"):
+                    continue
 
-                formattedData = datavalue
                 # format the data correctly
-                for kwd in ["Color", "Vector"]:
-                    if type(datavalue).__name__.find(kwd) >= 0:                        
-                        formattedData = list(datavalue)
-                self.data[dataKey] = formattedData
+
+                # store colors and vectors as float arrays
+                if type_datavalue in ["Color", "Vector"]:
+                    datavalue = list(datavalue)
+
+                if not is_jsonable(datavalue):
+                    continue
+                self.data[dataKey] = datavalue
 
     def setData(self, id, data, shadernode: bpy.types.ShaderNode):
         if shadernode is None:
