@@ -1,3 +1,3 @@
-# eevee_for_daz
+# blender NodeIO
 
-This Application is used to export Blender Material Node trees for further processing
+This Application is used to export Blender Material Nodes for further processing.
